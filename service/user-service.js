@@ -522,7 +522,7 @@ class UserService {
           $each: [
             {
               ...body,
-              id: user.historyPay.length === 0 ? 1 : user.historyPay.length,
+              id: user.historyPay.length === 0 ? 1 : user.historyPay.length + 1,
               date: getFormattedDate(),
             },
           ],
