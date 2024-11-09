@@ -34,15 +34,19 @@ class UserService {
     if (candidate) {
       throw ApiError.BadRequest(`Пользователь с такой почтой уже зарегистрирован`);
     }
+    const lengthUsers = await UserModel.countDocuments();
     const hashPassword = await bcrypt.hash(password, 3);
     const activatorLink = uuid.v4();
+    const changePasswordLink = uuid.v4();
     const createdAt = `${new Date().getDate()}.${new Date().getMonth() + 1}.${new Date().getFullYear()}`;
     const user = await UserModel.create({
+      id: lengthUsers + 1,
       email,
       password: hashPassword,
       isActivated: false,
       loginGoogle: false,
       activatorLink,
+      changePasswordLink,
       name: name,
       userImage: '',
       role: 'USER',
@@ -58,7 +62,7 @@ class UserService {
     await MailService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${activatorLink}`);
     const userDto = new UserDto(user);
     const tokens = tokenService.generateTokens({ ...userDto });
-    await tokenService.saveToken(userDto.id, tokens.refreshToken);
+    await tokenService.saveToken(user._id, tokens.refreshToken);
     const userInfo = {
       _id: user._id,
       name: user.name,
@@ -77,6 +81,21 @@ class UserService {
       lastVisit: user.lastVisit,
     };
     return { ...tokens, user: userInfo };
+  }
+  async resetPassword({ email }) {
+    const candidate = await UserModel.findOne({ email });
+    if (!candidate) {
+      throw ApiError.BadRequest(`Пользователя с такой почтой не найдено`);
+    }
+    await MailService.resetPassword(email, `${process.env.CLIENT_URL}/change-password?${candidate.changePasswordLink}`);
+    return { message: 'Мы отправили письмо на почту' };
+  }
+  async checkPasswordLink({ hash }) {
+    const candidate = await UserModel.findOne({ changePasswordLink: hash });
+    if (!candidate) {
+      throw ApiError.BadRequest(`Пользователя с такой почтой не найдено`);
+    }
+    return { user: candidate.name };
   }
   async loginGoogle(name, email, userImage, isActivated, password) {
     const candidate = await UserModel.findOne({
@@ -172,11 +191,11 @@ class UserService {
       $or: [{ email: email }, { name: email }],
     });
     if (!user) {
-      throw ApiError.BadRequest('Пользователя с такой почтой не существует');
+      throw ApiError.BadRequest('Пользователя с таким логином не существует');
     }
     const isPassEquals = await bcrypt.compare(password, user.password);
     if (!isPassEquals) {
-      throw ApiError.BadRequest('Не верный пароль или email');
+      throw ApiError.BadRequest('Не верный пароль или ');
     }
     await UserModel.updateOne({ email: email }, { $set: { lastVisit: new Date().getTime() } });
     const userDto = new UserDto(user);
@@ -286,12 +305,25 @@ class UserService {
       throw ApiError.BadRequest(`Какая-то ошибка`);
     }
   }
-  async updateUserPassword(password) {
-    const user = await UserModel.findOne({
-      name: password.user,
-    });
-    if (!user) {
-      throw ApiError.BadRequest('Error');
+  async updateUserPassword(body) {
+    if (body.type === 'reset' || body.type) {
+      const user = await UserModel.findOne({
+        name: body.password.user,
+      });
+      if (!user) {
+        throw ApiError.BadRequest('Error');
+      }
+      const hashPassword = await bcrypt.hash(body.password.newPassword, 3);
+      const updateDoc = {
+        $set: {
+          password: hashPassword,
+        },
+      };
+      const options = { returnDocument: 'after' };
+      const response = await UserModel.findOneAndUpdate({ name: body.password.user }, updateDoc, options);
+      return {
+        message: 'Успешно обновлено',
+      };
     }
     const isPassEquals = await bcrypt.compare(password.oldPassword, user.password);
     if (!isPassEquals) {

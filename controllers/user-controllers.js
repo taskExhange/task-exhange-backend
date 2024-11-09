@@ -18,6 +18,24 @@ class UserControllers {
       next(e);
     }
   }
+  async resetPassword(req, res, next) {
+    try {
+      const userData = await userService.resetPassword(req.body);
+      return res.json(userData);
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+  async checkPasswordLink(req, res, next) {
+    try {
+      const userData = await userService.checkPasswordLink(req.body);
+      return res.json(userData);
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
   async loginGoogle(req, res, next) {
     try {
       const { name, email, userImage, isActivated, password } = req.body;

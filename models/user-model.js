@@ -53,6 +53,9 @@ const userSchema = new Schema({
   activatorLink: {
     type: String,
   },
+  changePasswordLink: {
+    type: String,
+  },
 
   createdAt: {
     type: String,

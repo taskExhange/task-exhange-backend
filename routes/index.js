@@ -13,9 +13,11 @@ router.post('/registration', body('email').isEmail(), body('password').isLength(
 router.post('/login', UserControllers.login);
 router.post('/login-google', UserControllers.loginGoogle);
 router.post('/logout', UserControllers.logout);
+router.post('/reset-password', UserControllers.resetPassword);
 
 router.get('/activate/:link', UserControllers.activate);
 router.post('/activate-user', UserControllers.activatedUser);
+router.post('/check-password-link', UserControllers.checkPasswordLink);
 
 // router.get('/refresh', UserControllers.refresh);
 router.post('/refresh', UserControllers.refresh);

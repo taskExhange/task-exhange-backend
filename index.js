@@ -14,8 +14,7 @@ const app = express();
 app.use(
   cors({
     credentials: true,
-    // origin: 'http://localhost:3000',
-    origin: 'https://task-exchange-three.vercel.app',
+    origin: process.env.CLIENT_URL,
   })
 );
 app.use(bodyParser.json({ limit: '10mb' })); // Увеличивает лимит для JSON запросов
