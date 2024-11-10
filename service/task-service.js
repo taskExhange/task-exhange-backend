@@ -15,6 +15,17 @@ const getFormattedDate = () => {
   // Формируем строку в нужном формате
   return `${day}.${month}.${year} ${hours}:${minutes}`;
 };
+const getFormatted = () => {
+  const date = new Date();
+
+  // Получаем компоненты даты
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  // Формируем строку в нужном формате
+  return `${day}.${month}.${year}`;
+};
 class TaskService {
   async createTask(body) {
     const tasks = await TaskModel.find();
@@ -70,7 +81,12 @@ class TaskService {
     if (taskExists) {
       return { message: 'Вы уже выполнили эту задачу', status: 400 };
     }
-
+    if (user.countTasksToday.count === 5 && user.plan === 'BASIC') {
+      return { message: 'Вы достигли лимита заданий', status: 400 };
+    }
+    if (user.countTasksToday.count === 15 && user.plan === 'START') {
+      return { message: 'Вы достигли лимита заданий', status: 400 };
+    }
     const tasks = await TaskModel.find({ id: body.id });
     const updateDoc = {
       $push: {
@@ -89,6 +105,18 @@ class TaskService {
     };
     const options = { returnDocument: 'after' };
     await TaskModel.findOneAndUpdate({ id: body.id }, updateDoc, options);
+
+    const updateDocUser = {
+      $push: {
+        countTasksToday: {
+          $inc: { count: 1 },
+          date: getFormatted(),
+        },
+      },
+    };
+    const optionsUser = { returnDocument: 'after' };
+    await UserModel.findOneAndUpdate({ name: body.user }, updateDocUser, optionsUser);
+
     return { message: 'Сообщение отправлено', status: 200 };
   }
 

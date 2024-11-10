@@ -85,6 +85,14 @@ const userSchema = new Schema({
     type: [],
     default: [],
   },
+  countTasksToday: {
+    date: {
+      type: String,
+    },
+    count: {
+      type: Number,
+    },
+  },
 });
 
 module.exports = model('User', userSchema);

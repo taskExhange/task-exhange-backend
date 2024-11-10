@@ -195,7 +195,7 @@ class UserService {
     }
     const isPassEquals = await bcrypt.compare(password, user.password);
     if (!isPassEquals) {
-      throw ApiError.BadRequest('Не верный пароль или ');
+      throw ApiError.BadRequest('Не верный пароль или логин');
     }
     await UserModel.updateOne({ email: email }, { $set: { lastVisit: new Date().getTime() } });
     const userDto = new UserDto(user);
