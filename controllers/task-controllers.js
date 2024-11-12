@@ -19,6 +19,16 @@ class TaskControllers {
       next(e);
     }
   }
+  async deleteTask(req, res, next) {
+    try {
+      const id = req.params.id;
+      const result = await TaskService.deleteTask(id);
+      return res.json(result);
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
   async getMyTasks(req, res, next) {
     try {
       const user = req.params.user;

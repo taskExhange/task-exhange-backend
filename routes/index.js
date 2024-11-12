@@ -49,6 +49,7 @@ router.get('/get-tasks-admin', TaskControllers.getAllTasksAdmin);
 router.post('/complete-task', TaskControllers.completeTask);
 router.post('/change-task-complete-status', TaskControllers.changeTaskCompleteStatus);
 router.post('/change-status-task', TaskControllers.changeStatusTask);
+router.delete('/delete-task/:id', TaskControllers.deleteTask);
 
 router.get('/category', CategoryControllers.getAllCategorys);
 router.post('/create-category', CategoryControllers.createCategory);

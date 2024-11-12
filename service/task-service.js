@@ -60,7 +60,18 @@ class TaskService {
     }
     return { message: 'Задание обновлено', status: 200 };
   }
-
+  async deleteTask(id) {
+    const task = await TaskModel.find({ id });
+    if (!task) {
+      return { message: 'Задание не найдено', status: 400 };
+    }
+    // const result = await TaskModel.deleteOne({ id });
+    // if (!result) {
+    //   return { message: 'Не получилось удалить задание', status: 400 };
+    // }
+    const taskAll = await TaskModel.find();
+    return { message: 'Задание удалено', status: 200, taskAll };
+  }
   async getMyTasks(user) {
     const tasks = await TaskModel.find({ creator: user }).sort({ inTop: -1, id: -1 });
     return tasks;
