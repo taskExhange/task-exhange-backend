@@ -22,6 +22,7 @@ class TaskControllers {
   async deleteTask(req, res, next) {
     try {
       const id = req.params.id;
+      console.log(id);
       const result = await TaskService.deleteTask(id);
       return res.json(result);
     } catch (e) {

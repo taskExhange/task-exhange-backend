@@ -76,6 +76,10 @@ const userSchema = new Schema({
     type: [],
     default: [],
   },
+  waitCompleteTasks: {
+    type: [],
+    default: [],
+  },
 
   historyPay: {
     type: [],

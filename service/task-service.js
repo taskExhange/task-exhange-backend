@@ -48,9 +48,17 @@ class TaskService {
     if (!task) {
       return { message: 'Задание не найдено', status: 400 };
     }
+
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+    const nextWeekStr = nextWeek.toISOString().slice(0, 10);
+
     const updateDoc = {
       $set: {
         ...body,
+        status: 'waiting',
+        dateEnd: nextWeekStr,
       },
     };
     const options = { returnDocument: 'after' };
@@ -65,10 +73,10 @@ class TaskService {
     if (!task) {
       return { message: 'Задание не найдено', status: 400 };
     }
-    // const result = await TaskModel.deleteOne({ id });
-    // if (!result) {
-    //   return { message: 'Не получилось удалить задание', status: 400 };
-    // }
+    const result = await TaskModel.deleteOne({ id });
+    if (!result) {
+      return { message: 'Не получилось удалить задание', status: 400 };
+    }
     const taskAll = await TaskModel.find();
     return { message: 'Задание удалено', status: 200, taskAll };
   }
@@ -80,6 +88,11 @@ class TaskService {
     const user = await UserModel.findOne({ name: body.user });
     if (!user) {
       return { message: 'Пользователь не найден', status: 400 };
+    }
+
+    const findTaskInWaitComplete = user.waitCompleteTasks.find((task) => task.id === body.id);
+    if (findTaskInWaitComplete) {
+      return { message: 'Вы уже выполнили эту задачу', status: 400 };
     }
     // Проверка наличия и корректности массива completeTasks
     const completeTasks = Array.isArray(user.completeTasks)
@@ -106,7 +119,6 @@ class TaskService {
             {
               ...body,
               id: tasks[0].historyCompleted.length + 1,
-              date: getFormattedDate(),
             },
           ],
           $position: 0, // Добавить сообщение в начало массива
@@ -119,6 +131,22 @@ class TaskService {
 
     const updateDocUser = {
       $push: {
+        waitCompleteTasks: {
+          $each: [
+            {
+              id: tasks[0].id,
+              title: tasks[0].title,
+              description: tasks[0].description,
+              priceOneTask: tasks[0].priceOneTask,
+              status: tasks[0].status,
+              creator: tasks[0].creator,
+              countDone: tasks[0].countDone,
+              countWait: tasks[0].countWait,
+              countRefused: tasks[0].countRefused,
+            },
+          ],
+          $position: 0, // Добавить сообщение в начало массива
+        },
         countTasksToday: {
           $inc: { count: 1 },
           date: getFormatted(),
@@ -128,7 +156,7 @@ class TaskService {
     const optionsUser = { returnDocument: 'after' };
     await UserModel.findOneAndUpdate({ name: body.user }, updateDocUser, optionsUser);
 
-    return { message: 'Сообщение отправлено', status: 200 };
+    return { message: 'Задание отправлено на проверку', status: 200 };
   }
 
   async changeTaskCompleteStatus(body) {
@@ -180,6 +208,7 @@ class TaskService {
       link: task[0].link,
       categoryLabel: task[0].categoryLabel,
       category: task[0].category,
+      status: task[0].status,
     };
     return taskList;
   }

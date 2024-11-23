@@ -261,6 +261,8 @@ class UserService {
       historyPay: user.historyPay,
       isActivated: user.isActivated,
       lastVisit: user.lastVisit,
+      loginGoogle: user.loginGoogle,
+      createdAt: user.createdAt,
     };
     return { ...tokens, user: userInfo };
   }
@@ -298,7 +300,10 @@ class UserService {
     const options = { returnDocument: 'after' };
     const response = await UserModel.findOneAndUpdate({ name: updatedUser.name }, updateDoc, options);
     if (response) {
-      return { message: 'Успешно обновлено' };
+      const userDto = new UserDto(response);
+      const tokens = tokenService.generateTokens({ ...userDto });
+      await tokenService.saveToken(response._id, tokens.refreshToken);
+      return { message: 'Успешно обновлено', ...tokens };
     } else if (!response) {
       throw ApiError.BadRequest(`Не удалось обновить`);
     } else {
@@ -378,8 +383,8 @@ class UserService {
     const currentDate = new Date();
 
     const oneMonthLater = new Date();
-    oneMonthLater.setMonth(currentDate.getMonth() + 1);
-
+    // oneMonthLater.setMonth(currentDate.getMonth() + 1);
+    oneMonthLater.setDate(oneMonthLater.getDate() - 1);
     await TopExecutorModel.create({
       ...body,
       timeEnd: oneMonthLater.getTime(),

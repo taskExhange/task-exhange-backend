@@ -25,6 +25,12 @@ app.use(cookieParser());
 app.use('/api', router);
 app.use(errormiddleware);
 
+const cron = require('node-cron');
+const checkData = require('./check-data');
+cron.schedule('0 0 * * *', async () => {
+  checkData();
+});
+
 const start = async () => {
   try {
     await mongoose.connect(process.env.DB_URL, {});
